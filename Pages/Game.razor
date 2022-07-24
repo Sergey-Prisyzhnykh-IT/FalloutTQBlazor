@@ -1,7 +1,10 @@
 ﻿@page "/Game"
 @using System.ComponentModel.DataAnnotations
 @using FalloutTQBlazor.DateBase
+@using FalloutTQBlazor.GaemsControll.Player
 @using FalloutTQBlazor.GaemsControll.TextController
+@using Microsoft.EntityFrameworkCore
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 <PageTitle>Weather forecast</PageTitle>
 
@@ -22,6 +25,7 @@
     {
         <MatButton OnClick="@StartNew" Raised="true">Начать новую</MatButton>
         <MatButton OnClick="@LoadGame" Raised="true">Продолжить</MatButton>
+
     }
     else
     {
@@ -60,6 +64,9 @@
     private bool startDialod = true;
     private DBTextController lineDB;
     private int selectDialog;
+    private int playerId;
+    Player player;
+    Inventory inventory;
 
     //MatTheme theme1 = new MatTheme()
     //{
@@ -89,12 +96,34 @@
 
         }
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            if (firstRender)
+            {
+                playerId = await localStorage.GetItemAsync<int>("PlayerID");
+            }
+        }
+        catch
+        {
+            playerId = 0;
+        }
+
+    }
     private void Resume()
     {
-        var a = selectDialog;
+        using (ApplicationContext db = new ApplicationContext())
+        {
+            player.SaveIdDialog = selectDialog;
+            db.Update(player);
+            db.SaveChanges();
+
+        }
+
         GetLine(selectDialog);
         LoadDialog(lineDB);
-
     }
 
     private void GetLine(int id)
@@ -121,13 +150,66 @@
 
     private void StartNew()
     {
-        startDialod = false;
-        lineDB = DBtextAll.FirstOrDefault(x => x.Id == 1);
-        LoadDialog(lineDB);
+        if (playerId != 0)
+        {
+            string[] nameItem = new string[] { "Лазерный пистолет", "Аптечка", "Боевой нож", "Отмычки" };
+            string[] itemType = new string[] { "Оружие", "Помощь", "Оружие", "Помощь" };
+            int[] count = new int[] { 20, 10, 1, 10 };
+
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                player = db.Player.FirstOrDefault(pl => pl.Id == playerId);
+                db.Inventories.Include(pl => pl.Player).ToList();
+                player.Level = 1;
+                player.Experience = 0;
+                player.ExperienceNextLevel = 1000;
+                player.Strength = 1;
+                player.Perception = 1;
+                player.Endurance = 1;
+                player.Charisma = 1;
+                player.Agility = 1;
+                player.Luck = 1;
+                player.Intelligence = 1;
+                player.SaveIdDialog = 1;
+                player.Сovers = 1000;
+                foreach (var inventory in player.Inventory)
+                {
+                    inventory.NameItem = nameItem;
+                    inventory.ItemType = itemType;
+                    inventory.Count = count;
+                    db.Inventories.Update(inventory);
+                }
+                db.Player.Update(player);
+                db.SaveChanges();
+            }
+            startDialod = false;
+            lineDB = DBtextAll.FirstOrDefault(x => x.Id == player.SaveIdDialog);
+            LoadDialog(lineDB);
+        }
+        else
+        {
+            lineDB.Text = "Сначала необходимо зарегистрироваться или войти";
+            startDialod = true;
+        }
     }
     private void LoadGame()
     {
+        if (playerId != 0)
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                player = db.Player.FirstOrDefault(pl => pl.Id == playerId);
+            }
+            startDialod = false;
+            lineDB = DBtextAll.FirstOrDefault(x => x.Id == player.SaveIdDialog);
+            LoadDialog(lineDB);
+        }
+        else
+        {
+            lineDB.Text = "Сначала необходимо зарегистрироваться или войти";
+            startDialod = true;
+        }
+
 
     }
-
 }

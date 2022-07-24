@@ -55,8 +55,10 @@ else
         }
 
     }
-    <input type="button" value="@textButtonStartGame" @onclick="StartGame" />
+    <MatButton Link="/Game" Raised="true">@textButtonStartGame</MatButton>
+@*    <input type="button" value="@textButtonStartGame" @onclick="StartGame" />*@
 }
+
 
 
 @code
@@ -83,7 +85,8 @@ else
                 checkLoginAndPassword = true;
                 textButtonStartGame = "Продолжить путешествие";
 
-                await localStorage.SetItemAsync("CheckEnter", true);
+                await localStorage.SetItemAsync("PlayerID",playerDB.Id);
+               // await localStorage.SetItemAsync("CheckEnter", true);
             }
             else
                 checkLoginAndPassword = false;
@@ -95,9 +98,9 @@ else
     {
         if (!String.IsNullOrEmpty(name) && !String.IsNullOrEmpty(password))
         {
-            string[] nameItem = new string[] { "1111", "21111", "Боевой нож", "Отмычки" };
+            string[] nameItem = new string[] { "Лазерный пистолет", "Аптечка", "Боевой нож", "Отмычки" };
             string[] itemType = new string[] { "Оружие", "Помощь", "Оружие", "Помощь" };
-            int[] count = new int[] { 20, 10, 30, 10 };
+            int[] count = new int[] { 20, 10, 1, 10 };
 
             using (ApplicationContext db = new ApplicationContext())
             {
@@ -113,17 +116,11 @@ else
                 checkLoginAndPassword = true;
                 checkEnter = true;
                 textButtonStartGame = "Начать путешествие";
-                await localStorage.SetItemAsync("CheckEnter", true);
-
+                await localStorage.SetItemAsync("PlayerID",playerDB.Id.ToString());
+                //await localStorage.SetItemAsync("CheckEnter", true);
             }
         }
         else
             checkLoginAndPassword = false;
-
-    }
-
-    private void StartGame()
-    {
-
     }
 }
