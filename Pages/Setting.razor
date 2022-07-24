@@ -1,0 +1,359 @@
+﻿@page "/Setting"
+@using System.ComponentModel.DataAnnotations
+@using FalloutTQBlazor.DateBase
+@using FalloutTQBlazor.GaemsControll.Player
+@using FalloutTQBlazor.GaemsControll.TextController
+<PageTitle>Add Data base</PageTitle>
+<style>
+    body {
+        background-image: url(css/Img/setting.jpg);
+        background-size: cover;
+        background-repeat: no-repeat;
+    }
+</style>
+
+<div class="InputText">
+    <EditForm Model="model" >
+        <DataAnnotationsValidator />
+        @if (!startDialog)
+        {
+            <h2>Выберите диалог для редактирования</h2>
+            <MatSelect Label="Выбор диалога" @bind-Value="@selectDialog">
+                @foreach (var textShort in DBtextAll)
+                {
+                <MatOption TValue="int" Value="@textShort.Id">@textShort.ShortText</MatOption>
+                }
+            </MatSelect>
+        }
+        <h2> Введите описание события</h2> <br />
+        <InputTextArea @bind-Value="model.Text" placeholder="Основной текст" rows="4" cols="100" /> <br />
+        <h2> Введите вариант выбора</h2> <br />
+        @if (eventVariants.Count != 0)
+        {
+            @foreach (var eventVar in eventVariants)
+            {
+                <h3>@eventVar.ToString()</h3>
+            }
+        }
+        <InputTextArea @bind-Value="@eventVariant" placeholder="Краткая запись след. события (для удаления строки из списка введите сюда номер строки)" rows="2" cols="100" /> <br />
+        <MatButton OnClick="@Enter" Raised="true">Записать </MatButton>
+        <MatButton OnClick="@Clear" Raised="true">Очистить весь список </MatButton>
+        <MatButton OnClick="@RemoveAt" Raised="true">Удалить строку под номером </MatButton><br />
+        @if (!startDialog)
+        {
+            <MatCheckbox @bind-Value="@linkToAnExistingDialog" Label="@(LinkToAnExistingDialogText(linkToAnExistingDialog))"></MatCheckbox>
+            @if (linkToAnExistingDialog)
+            {
+                <br />
+                <MatSelect Label="Выбор диалога" @bind-Value="@selectExistingDialog">
+                    @foreach (var textShort in DBtextAll)
+                    {
+                        <MatOption TValue="int" Value="@textShort.Id">@textShort.ShortText</MatOption>
+                    }
+                </MatSelect>
+                <MatButton OnClick="@EnterExistinDialog" Raised="true">Привязать диалог </MatButton><br />
+            }
+        }
+        <br /> <MatButton OnClick="@ProcessValidForm" Raised="true">Записать в Базу данных</MatButton><br />
+        <MatCheckbox @bind-Value="@startDialog" Label="@(StartDialogText(startDialog))"></MatCheckbox>
+        <ValidationSummary />
+    </EditForm>
+    <MatCheckbox @bind-Value="@showDialog" Label="@(ShowDialogDB(showDialog))"></MatCheckbox><br />
+    @if (showDialog)
+    {
+        <EditForm Model = "show">
+        
+        <MatSelect Label="Выбор диалога" @bind-Value="@selectShowDialog">
+            @foreach (var textShort in DBtextAll)
+            {
+                <MatOption TValue="int" Value="@textShort.Id">@textShort.ShortText</MatOption>
+            }
+        </MatSelect>
+        <DataAnnotationsValidator />
+        <br /><InputTextArea @bind-Value="show.TextDialog" rows="2" cols="100" /> <br />
+        <ValidationSummary />
+    </EditForm>
+        @foreach (var sds in showDialogSelectOptions)
+        {
+            <a>@sds</a><br />
+        }
+        <br />
+         <MatButton OnClick="@Show" Raised="true">Показать</MatButton><br />
+    }
+</div>
+
+<MatSnackbar @bind-IsOpen="@snackBarIsOpen" Leading="true">
+    <MatSnackbarContent>Запись БД успешна</MatSnackbarContent>
+</MatSnackbar>
+
+@code {
+    bool snackBarIsOpen = false;
+    bool startDialog;
+    bool linkToAnExistingDialog; // Привязать существующему диалогу
+    bool showDialog;
+
+    private int selectDialog;
+    private int selectExistingDialog;
+    private int selectShowDialog;
+    //private string text = "";
+    private string eventVariant = "";
+    private string showDialogId = "";
+    private List<string> showDialogSelectOptions = new List<string>();
+
+    private Dictionary<string, string> eventVariantsDB = new Dictionary<string, string>();
+    private List<DBTextController> DBtextAll = new List<DBTextController>();
+    private List<string> eventVariants = new List<string>();
+
+    private AddDateBase model = new();
+    private ShowDialog show = new();
+
+    private void Show()
+    {
+        using (ApplicationContext db = new ApplicationContext())
+        {
+            if (selectShowDialog != 0)
+            {
+                show.TextDialog = "";
+                showDialogSelectOptions.Clear();
+                var lineText = db.TextControllers.FirstOrDefault(t => t.Id == selectShowDialog);
+                showDialogId = lineText.Id.ToString();
+
+                if (lineText.Text != null)
+                    show.TextDialog = lineText.Text;
+                else
+                    show.TextDialog = "Строка не заполнена";
+
+                if (lineText.SelectionOptions != null)
+                {
+                    for (var i = 0; i < lineText.SelectionOptions.Length; i++)
+                    {
+                        showDialogSelectOptions.Add(db.TextControllers.FirstOrDefault(t => t.Id == lineText.SelectionOptions[i]).ShortText);
+                    }
+                }
+                else
+                    showDialogSelectOptions.Add("Продолжения нет");
+            }
+        }
+    }
+
+    string ShowDialogDB(bool val)
+    {
+        return !val ? "Показать диалог" : "Скрыть диалог";
+    }
+
+    string StartDialogText(bool val)
+    {
+        return !val ? "Создать стартовый диалог" : "Редактировать диалог";
+    }
+
+    string LinkToAnExistingDialogText(bool val)
+    {
+        //if (eventVariantsDB.Count != 0 && val == false)
+        //{
+        //    foreach (var variant in eventVariantsDB)
+        //    {
+        //        if (variant.Value == "Old")
+        //        {
+        //            eventVariants.Remove(variant.Key);
+        //        }
+
+        //    }
+        //    eventVariantsDB.Clear();
+        //}
+
+        return !val ? "Привязать существующему диалогу" : "Не Привязать существующему диалогу";
+    }
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                DBtextAll = db.TextControllers.ToList();
+
+                if (DBtextAll.Count == 0)
+                    startDialog = true;
+            }
+        }
+        catch
+        {
+            startDialog = true;
+        }
+
+    }
+
+    private void ProcessValidForm()
+    {
+
+        using (ApplicationContext db = new ApplicationContext())
+        {
+                if (startDialog)
+                    SaveStartDialog(db);
+                if (!linkToAnExistingDialog)
+                    SaveNewDialog(db);
+                else
+                    SaveLinkToAnExistingDialog(db);
+        }
+    }
+
+    private void SaveStartDialog(ApplicationContext db)
+    {
+        var text = model.Text;
+        int[] idNewDialogs = new int[eventVariantsDB.Count];
+
+        for (var i = 0; i < idNewDialogs.Length; i++)
+        {
+            idNewDialogs.SetValue(i + 2, i);
+        }
+        DBTextController dBTextStartDialog = new DBTextController(model.Text, "Начать заново", idNewDialogs);
+        db.TextControllers.AddRange(dBTextStartDialog);
+
+        foreach (var eventVar in eventVariantsDB)
+        {
+            DBTextController dBTextShortDialog = new DBTextController(eventVar.Key.ToString());
+            db.TextControllers.AddRange(dBTextShortDialog);
+        }
+
+        db.SaveChanges();
+        snackBarIsOpen = true;
+    }
+
+    private void SaveNewDialog(ApplicationContext db)
+    {
+        if (selectDialog != 0)
+        {
+            var lineText = db.TextControllers.FirstOrDefault(t => t.Id == selectDialog);
+            lineText.Text = model.Text;
+            var idNewDialog = DBtextAll.Count() + 1;
+
+            int[] idNewDialogs = new int[eventVariants.Count];
+            for (var i = 0; i < idNewDialogs.Length; i++)
+            {
+                idNewDialogs.SetValue(i + idNewDialog, i);
+            }
+            lineText.SelectionOptions = idNewDialogs;
+            db.TextControllers.Update(lineText);
+
+            foreach (var eventVar in eventVariantsDB)
+            {
+                DBTextController dBTextShortDialog = new DBTextController(eventVar.Key.ToString());
+                db.TextControllers.AddRange(dBTextShortDialog);
+            }
+
+            db.SaveChanges();
+            snackBarIsOpen = true;
+        }
+    }
+
+    private void SaveLinkToAnExistingDialog(ApplicationContext db)
+    {
+        if (selectExistingDialog != 0 && selectDialog != 0)
+        {
+            var lineText = db.TextControllers.FirstOrDefault(t => t.Id == selectDialog);
+            lineText.Text = model.Text;
+
+            List<int> idOldDialog = new List<int>();
+            List<string> newDialog = new List<string>();
+            foreach (var eventVar in eventVariantsDB)
+            {
+                if (eventVar.Value == "Old")
+                {
+                    var line = DBtextAll.Find(f => f.ShortText == eventVar.Key);
+                    idOldDialog.Add(line.Id);
+                }
+            }
+            foreach (var eventVar in eventVariantsDB)
+            {
+                if (eventVar.Value == "New")
+                    newDialog.Add(eventVar.Key);
+            }
+
+            int[] idOld = new int[idOldDialog.Count];
+            idOldDialog.CopyTo(idOld);
+
+            if (newDialog.Count != 0)
+            {
+                int[] idNew = new int[newDialog.Count];
+                var countAllRow = DBtextAll.Count();
+                for (var i = 0; i < idNew.Length; i++)
+                {
+                    idNew.SetValue(i + countAllRow + 1, i);
+                }
+
+                int[] setIdDB = idOld.Concat(idNew).ToArray();
+                lineText.SelectionOptions = setIdDB;
+                db.TextControllers.Update(lineText);
+
+                foreach (var eventVar in newDialog)
+                {
+                    DBTextController dBTextShortDialog = new DBTextController(eventVar.ToString());
+                    db.TextControllers.AddRange(dBTextShortDialog);
+                }
+            }
+            else
+            {
+                lineText.SelectionOptions = idOld;
+                db.TextControllers.Update(lineText);
+            }
+
+            db.SaveChanges();
+            snackBarIsOpen = true;
+        }
+    }
+
+
+    private void Enter()
+    {
+        if (!String.IsNullOrEmpty(eventVariant))
+        {
+            eventVariants.Add(eventVariant);
+            eventVariantsDB.Add(eventVariant, "New");
+            eventVariant = "";
+        }
+    }
+
+    private void EnterExistinDialog()
+    {
+        if (selectExistingDialog != 0)
+        {
+            var dialog = DBtextAll.Find(id => id.Id == selectExistingDialog);
+            eventVariants.Add(dialog.ShortText);
+            eventVariantsDB.Add(dialog.ShortText, "Old");
+        }
+    }
+
+    private void Clear()
+    {
+        eventVariants.Clear();
+        eventVariantsDB.Clear();
+    }
+
+    private void RemoveAt()
+    {
+        try
+        {
+            int numberLine = Convert.ToInt32(eventVariant);
+            numberLine--;
+            eventVariantsDB.Remove(eventVariants[numberLine]);
+            eventVariants.RemoveAt(numberLine);
+            eventVariant = "";
+        }
+        catch
+        {
+            eventVariant = "Строка не найдена";
+        }
+    }
+
+    private class AddDateBase
+    {
+        [Required]
+        public string Text { get; set; }
+    }
+    
+    private class ShowDialog
+    {
+        [Required]
+        public string TextDialog { get; set; }
+    }
+  }

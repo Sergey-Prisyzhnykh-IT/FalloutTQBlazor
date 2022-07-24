@@ -1,0 +1,133 @@
+﻿@page "/Game"
+@using System.ComponentModel.DataAnnotations
+@using FalloutTQBlazor.DateBase
+@using FalloutTQBlazor.GaemsControll.TextController
+
+<PageTitle>Weather forecast</PageTitle>
+
+<style>
+    body {
+        background-image: url(css/Img/bacGrundGreen.jpg);
+        background-size: cover;
+        background-repeat: no-repeat;
+    }
+
+    }
+</style>
+<div class="Gamediv">
+    <font color="#ffffff" size="4">@lineDB.Text</font>
+    <br />
+    <br />
+    @if (startDialod)
+    {
+        <MatButton OnClick="@StartNew" Raised="true">Начать новую</MatButton>
+        <MatButton OnClick="@LoadGame" Raised="true">Продолжить</MatButton>
+    }
+    else
+    {
+        @*                <MatThemeProvider Theme="@theme1">
+            <div class="mat-blazor-demo-theme-app-row">
+            <MatButton Icon="favorite">Text</MatButton>
+            <MatButton Raised="true" Icon="favorite">Raised</MatButton>
+            <MatButton Unelevated="true" Icon="favorite">Unelevated</MatButton>
+            <MatButton Outlined="true" Icon="favorite">Outlined</MatButton>
+            <MatButton Dense="true" Icon="favorite">Dense</MatButton>
+            <MatRadioGroup @bind-Value="@selectDialog" TValue="int">
+            @foreach (var item in eventOptions)
+            {
+            <MatRadioButton Value="@item.Key" Label=" " TValue="int"></MatRadioButton>
+            <font color ="#ffffff" size = "4">@lineDB.Text</font><br />
+            }
+
+            </MatRadioGroup>
+            </div>
+            </MatThemeProvider>*@
+        <MatRadioGroup @bind-Value="@selectDialog" TValue="int">
+            @foreach (var item in eventOptions)
+            {
+                <MatRadioButton Value="@item.Key" Label=" " TValue="int"></MatRadioButton>
+                <font color ="#ffffff" size = "4">@item.Value</font><br />
+            }
+        </MatRadioGroup>
+        <MatButton OnClick="@Resume" Raised="true">Далее</MatButton>
+    }
+</div>
+
+
+@code {
+    private List<DBTextController> DBtextAll = new List<DBTextController>();
+    private Dictionary<int, string> eventOptions = new Dictionary<int, string>();
+    private bool startDialod = true;
+    private DBTextController lineDB;
+    private int selectDialog;
+
+    //MatTheme theme1 = new MatTheme()
+    //{
+    //    Primary = MatThemeColors.Orange._500.Value,
+    //    Secondary = MatThemeColors.BlueGrey._500.Value,
+    //    Background = MatThemeColors.Red._500.Value,
+    //    OnPrimary=MatThemeColors.Red._500.Value,
+    //    OnSecondary = MatThemeColors.Red._500.Value,
+    //    OnSurface = MatThemeColors.Red._500.Value
+    //};
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                DBtextAll = db.TextControllers.ToList();
+            }
+            if (startDialod)
+            {
+                GetLine(1);
+            }
+        }
+        catch
+        {
+
+        }
+    }
+    private void Resume()
+    {
+        var a = selectDialog;
+        GetLine(selectDialog);
+        LoadDialog(lineDB);
+
+    }
+
+    private void GetLine(int id)
+    {
+        lineDB = null;
+        lineDB = DBtextAll.FirstOrDefault(x => x.Id == id);
+    }
+
+    private void LoadDialog(DBTextController lineNow)
+    {
+        eventOptions.Clear();
+        if (lineNow.SelectionOptions != null)
+        {
+            foreach (var item in lineNow.SelectionOptions)
+            {
+                var lineNew = DBtextAll.FirstOrDefault(x => x.Id == item);
+                eventOptions.Add(lineNew.Id, lineNew.ShortText);
+            }
+        }
+        else
+            lineDB.Text = "Карамба, продолжения то нет";
+
+    }
+
+    private void StartNew()
+    {
+        startDialod = false;
+        lineDB = DBtextAll.FirstOrDefault(x => x.Id == 1);
+        LoadDialog(lineDB);
+    }
+    private void LoadGame()
+    {
+
+    }
+
+}

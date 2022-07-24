@@ -1,0 +1,129 @@
+﻿@page "/"
+@using FalloutTQBlazor.DateBase
+@using System.Text
+@using FalloutTQBlazor.GaemsControll.Player
+@using Microsoft.EntityFrameworkCore
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+<PageTitle>Index</PageTitle>
+
+<style>
+    body {
+        background-image : url(css/Img/Home.jpg);
+            background-size: cover;
+    background-repeat: no-repeat;
+    }
+</style>
+@*    <body background="/css/Img/Home.jpg" >
+    </body>*@
+
+
+
+@if (!checkEnter)
+{
+    <div class="container">
+        <section id="content">
+            <form action="">
+                <h1>Login Form</h1>
+                @if (!checkLoginAndPassword)
+                {
+                    <h1>Пользователь не найден</h1>
+                }
+                <div>
+                    <input type="text" placeholder="Username" required="" id="username" @bind-value="name" />
+                </div>
+                <div>
+                    <input type="password" placeholder="Password" required="" id="password" @bind-value="password" />
+                </div>
+                <div>
+                    <input type="button" value="Войти" @onclick="Enter" />
+                    <input type="button" value="Регистрация" @onclick="Registration" />
+                </div>
+            </form>
+        </section>
+    </div>
+}
+else
+{
+    <h1>Добро пожаловать в пустошь @player.Name</h1>
+    @foreach (var item in player.Inventory.ToList())
+    {
+
+        @foreach (var i in @item.NameItem.ToArray())
+        {
+            <h1>@i</h1>
+        }
+
+    }
+    <input type="button" value="@textButtonStartGame" @onclick="StartGame" />
+}
+
+
+@code
+{
+    private string name = "";
+    private string password = "";
+    private Player player = new Player();
+    private bool checkEnter;
+    private bool checkLoginAndPassword = true;
+    private string textButtonStartGame = "";
+
+    private async Task Enter()
+    {
+        using (ApplicationContext db = new ApplicationContext())
+        {
+            // получаем объекты из бд и выводим
+            var playerDB = db.Player.FirstOrDefault(n => n.Name == name);
+
+            if (playerDB != null && playerDB.Password == password)
+            {
+                db.Inventories.Include(pl => pl.Player).ToList();
+                player = playerDB;
+                checkEnter = true;
+                checkLoginAndPassword = true;
+                textButtonStartGame = "Продолжить путешествие";
+
+                await localStorage.SetItemAsync("CheckEnter", true);
+            }
+            else
+                checkLoginAndPassword = false;
+
+        }
+    }
+
+    private async Task Registration()
+    {
+        if (!String.IsNullOrEmpty(name) && !String.IsNullOrEmpty(password))
+        {
+            string[] nameItem = new string[] { "1111", "21111", "Боевой нож", "Отмычки" };
+            string[] itemType = new string[] { "Оружие", "Помощь", "Оружие", "Помощь" };
+            int[] count = new int[] { 20, 10, 30, 10 };
+
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                Player playerDB = new Player(name, password);
+                Inventory inventory = new Inventory(nameItem, itemType, count) { Player = playerDB };
+
+                // добавляем их в бд
+                db.Player.AddRange(playerDB);
+                db.Inventories.AddRange(inventory);
+                db.SaveChanges();
+
+                player = playerDB;
+                checkLoginAndPassword = true;
+                checkEnter = true;
+                textButtonStartGame = "Начать путешествие";
+                await localStorage.SetItemAsync("CheckEnter", true);
+
+            }
+        }
+        else
+            checkLoginAndPassword = false;
+
+    }
+
+    private void StartGame()
+    {
+
+    }
+}
