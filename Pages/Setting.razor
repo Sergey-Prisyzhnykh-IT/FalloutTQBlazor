@@ -78,7 +78,9 @@
             <a>@sds</a><br />
         }
         <br />
-         <MatButton OnClick="@Show" Raised="true">Показать</MatButton><br />
+         <MatButton OnClick="@Show" Raised="true">Показать</MatButton>
+         <MatButton OnClick="@Update" Raised="true">Обновить</MatButton>
+         <br />
     }
 </div>
 
@@ -106,6 +108,18 @@
 
     private AddDateBase model = new();
     private ShowDialog show = new();
+
+    private void Update()
+    {
+        using (ApplicationContext db = new ApplicationContext())
+        {
+            var lineText = db.TextControllers.FirstOrDefault(t => t.Id == selectShowDialog);
+            lineText.Text = show.TextDialog;
+            db.Update(lineText);
+            db.SaveChanges();
+        }
+        snackBarIsOpen = true;
+    }
 
     private void Show()
     {
@@ -148,19 +162,6 @@
 
     string LinkToAnExistingDialogText(bool val)
     {
-        //if (eventVariantsDB.Count != 0 && val == false)
-        //{
-        //    foreach (var variant in eventVariantsDB)
-        //    {
-        //        if (variant.Value == "Old")
-        //        {
-        //            eventVariants.Remove(variant.Key);
-        //        }
-
-        //    }
-        //    eventVariantsDB.Clear();
-        //}
-
         return !val ? "Привязать существующему диалогу" : "Не Привязать существующему диалогу";
     }
 

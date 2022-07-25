@@ -1,10 +1,12 @@
 ﻿@page "/Game"
 @using System.ComponentModel.DataAnnotations
 @using FalloutTQBlazor.DateBase
+@using FalloutTQBlazor.GaemsControll
 @using FalloutTQBlazor.GaemsControll.Player
 @using FalloutTQBlazor.GaemsControll.TextController
 @using Microsoft.EntityFrameworkCore
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject IMatDialogService MatDialogService
 
 <PageTitle>Weather forecast</PageTitle>
 
@@ -18,7 +20,11 @@
     }
 </style>
 <div class="Gamediv">
-    <font color="#ffffff" size="4">@lineDB.Text</font>
+    <div class="TextBorder">
+        <div>
+            <font color="#ffffff" size="4">@lineDB.Text</font>
+        </div>
+    </div>
     <br />
     <br />
     @if (startDialod)
@@ -29,23 +35,6 @@
     }
     else
     {
-        @*                <MatThemeProvider Theme="@theme1">
-            <div class="mat-blazor-demo-theme-app-row">
-            <MatButton Icon="favorite">Text</MatButton>
-            <MatButton Raised="true" Icon="favorite">Raised</MatButton>
-            <MatButton Unelevated="true" Icon="favorite">Unelevated</MatButton>
-            <MatButton Outlined="true" Icon="favorite">Outlined</MatButton>
-            <MatButton Dense="true" Icon="favorite">Dense</MatButton>
-            <MatRadioGroup @bind-Value="@selectDialog" TValue="int">
-            @foreach (var item in eventOptions)
-            {
-            <MatRadioButton Value="@item.Key" Label=" " TValue="int"></MatRadioButton>
-            <font color ="#ffffff" size = "4">@lineDB.Text</font><br />
-            }
-
-            </MatRadioGroup>
-            </div>
-            </MatThemeProvider>*@
         <MatRadioGroup @bind-Value="@selectDialog" TValue="int">
             @foreach (var item in eventOptions)
             {
@@ -54,6 +43,83 @@
             }
         </MatRadioGroup>
         <MatButton OnClick="@Resume" Raised="true">Далее</MatButton>
+        <br />
+        <br />
+        @if (showStatPlayer)
+        {
+            <div class="StatePlayerAndInventories">
+                <div>
+                    <font color="#ffffff" size="4">&nbsp; SPECIAL - @player.Name &nbsp;</font><br />
+                    <font color="#ffffff" size="4">&nbsp; Уровень - @player.Level &nbsp;</font><br />
+                    <font color="#ffffff" size="4">&nbsp; До след,Уровня @player.ExperienceNextLevel &nbsp;</font><br />
+                    <font color="#ffffff" size="4">&nbsp; Сила - @player.Strength &nbsp;</font><br />
+                    <font color="#ffffff" size="4">&nbsp; Восприятие -@player.Perception &nbsp;</font><br />
+                    <font color="#ffffff" size="4">&nbsp; Выносливость -  @player.Endurance &nbsp;</font><br />
+                    <font color="#ffffff" size="4">&nbsp; Харизма - @player.Charisma &nbsp;</font><br />
+                    <font color="#ffffff" size="4">&nbsp; Интелект - @player.Intelligence &nbsp;</font><br />
+                    <font color="#ffffff" size="4">&nbsp; Ловкость - @player.Agility &nbsp;</font><br />
+                    <font color="#ffffff" size="4">&nbsp; Удача - @player.Luck &nbsp;</font><br />
+                    <font color="#ffffff" size="4">&nbsp; Крышки - @player.Сovers &nbsp;</font><br />
+                </div>
+                <div>
+                    <font color="#ffffff" size="4">&nbsp; Инвентарь: &nbsp;</font><br />
+                    @for (var i = 0; i < @player.Inventory.NameItem.Length; i++)
+                    {
+                        <font color="#ffffff" size="4">&nbsp; @player.Inventory.NameItem[i] - @player.Inventory.Count[i] &nbsp;</font>
+                        <br />
+                    }
+                </div>
+            </div>
+            <br />
+            <br />
+            <MatButton OnClick="@CloseStatePlayer" Raised="true">Скрыть статистику Героя</MatButton>            
+        }
+        else
+        {
+            <MatButton OnClick="@ShowStatPlayer" Raised="true">Показать статистику Героя</MatButton>
+        }
+        if (player.SaveCountSPECIAL != 0)
+            {
+                <br />
+                <MatButton OnClick="@DistributeSPECIALPoints" Raised="true">Распределить очки SPECIAL</MatButton>
+                <br />
+                @if (showSPECIALPoints)
+                {
+                    <font color="#ffffff" size="4">&nbsp; SPECIAL - @AllPoints оч. &nbsp;</font>
+                    <br />
+                    <font color="#ffffff" size="4">&nbsp; Уровень - @player.Level &nbsp;</font>                     
+                    <br />
+                    <MatButton OnClick="@RemoveStrength" Raised="true">-</MatButton>
+                    <font color="#ffffff" size="4">&nbsp; Сила - @S &nbsp;</font>
+                    <MatButton OnClick="@AddStrength" Raised="true">+</MatButton>
+                    <br />
+                    <MatButton OnClick="@RemovePerception" Raised="true">-</MatButton>
+                    <font color="#ffffff" size="4">&nbsp; Восприятие -@P &nbsp;</font>
+                    <MatButton OnClick="@AddPerception" Raised="true">+</MatButton>
+                    <br />
+                    <MatButton OnClick="@RemoveEndurance" Raised="true">-</MatButton>
+                    <font color="#ffffff" size="4">&nbsp; Выносливость -  @E &nbsp;</font>
+                    <MatButton OnClick="@AddEndurance" Raised="true">+</MatButton>
+                    <br />
+                    <MatButton OnClick="@RemoveCharisma" Raised="true">-</MatButton>
+                    <font color="#ffffff" size="4">&nbsp; Харизма - @C &nbsp;</font>
+                    <MatButton OnClick="@AddCharisma" Raised="true">+</MatButton>
+                    <br />
+                    <MatButton OnClick="@RemoveIntelligence" Raised="true">-</MatButton>
+                    <font color="#ffffff" size="4">&nbsp; Интелект - @I &nbsp;</font>
+                    <MatButton OnClick="@AddIntelligence" Raised="true">+</MatButton>
+                    <br />
+                    <MatButton OnClick="@RemoveAgility" Raised="true">-</MatButton>
+                    <font color="#ffffff" size="4">&nbsp; Ловкость - @A &nbsp;</font>
+                    <MatButton OnClick="@AddAgility" Raised="true">+</MatButton>
+                    <br />
+                    <MatButton OnClick="@RemoveLuck" Raised="true">-</MatButton>
+                    <font color="#ffffff" size="4">&nbsp; Удача - @L &nbsp;</font>
+                    <MatButton OnClick="@AddLuck" Raised="true">+</MatButton>
+                    <br />
+                    <MatButton OnClick="@ToDistribute" Raised="true">Распределить</MatButton>
+                }
+            }
     }
 </div>
 
@@ -62,21 +128,40 @@
     private List<DBTextController> DBtextAll = new List<DBTextController>();
     private Dictionary<int, string> eventOptions = new Dictionary<int, string>();
     private bool startDialod = true;
+    private bool showStatPlayer;
+    private bool showSPECIALPoints;
     private DBTextController lineDB;
     private int selectDialog;
     private int playerId;
     Player player;
     Inventory inventory;
 
-    //MatTheme theme1 = new MatTheme()
-    //{
-    //    Primary = MatThemeColors.Orange._500.Value,
-    //    Secondary = MatThemeColors.BlueGrey._500.Value,
-    //    Background = MatThemeColors.Red._500.Value,
-    //    OnPrimary=MatThemeColors.Red._500.Value,
-    //    OnSecondary = MatThemeColors.Red._500.Value,
-    //    OnSurface = MatThemeColors.Red._500.Value
-    //};
+    //SPECIAL
+    int AllPoints;
+    int S;
+    int P;
+    int E;
+    int C;
+    int I;
+    int A;
+    int L;
+
+    private void DistributeSPECIALPoints()
+    {
+        showStatPlayer = false;
+        if (showSPECIALPoints)
+            showSPECIALPoints = false;
+        else
+            showSPECIALPoints = true;
+        AllPoints = player.SaveCountSPECIAL;
+        S = player.Strength;
+        P = player.Perception;
+        E = player.Endurance;
+        C = player.Charisma;
+        I = player.Intelligence;
+        A = player.Agility;
+        L = player.Luck;
+    }
 
     protected override void OnInitialized()
     {
@@ -85,6 +170,12 @@
             using (ApplicationContext db = new ApplicationContext())
             {
                 DBtextAll = db.TextControllers.ToList();
+                if (playerId != 0)
+                {
+                    player = db.Player.FirstOrDefault(x => x.Id == playerId);
+                    db.Inventories.Include(pl => pl.Player).ToList();
+                }
+
             }
             if (startDialod)
             {
@@ -171,20 +262,30 @@
                 player.Luck = 1;
                 player.Intelligence = 1;
                 player.SaveIdDialog = 1;
+                player.SaveCountSPECIAL = 0;
                 player.Сovers = 1000;
-                foreach (var inventory in player.Inventory)
-                {
-                    inventory.NameItem = nameItem;
-                    inventory.ItemType = itemType;
-                    inventory.Count = count;
-                    db.Inventories.Update(inventory);
-                }
+
+                player.Inventory.NameItem = nameItem;
+                player.Inventory.ItemType = itemType;
+                player.Inventory.Count = count;
+                db.Inventories.Update(player.Inventory);
                 db.Player.Update(player);
                 db.SaveChanges();
             }
+            GameControll.AddCPECIALStartNewGame(playerId);
             startDialod = false;
             lineDB = DBtextAll.FirstOrDefault(x => x.Id == player.SaveIdDialog);
             LoadDialog(lineDB);
+
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                DBtextAll = db.TextControllers.ToList();
+                if (playerId != 0)
+                {
+                    player = db.Player.FirstOrDefault(x => x.Id == playerId);
+                    db.Inventories.Include(pl => pl.Player).ToList();
+                }
+            }
         }
         else
         {
@@ -199,17 +300,186 @@
             using (ApplicationContext db = new ApplicationContext())
             {
                 player = db.Player.FirstOrDefault(pl => pl.Id == playerId);
+                db.Inventories.Include(pl => pl.Player).ToList(); ;
+
+                if (player.Level == 1)
+                    StartNew();
+
             }
             startDialod = false;
             lineDB = DBtextAll.FirstOrDefault(x => x.Id == player.SaveIdDialog);
             LoadDialog(lineDB);
+
+            using (ApplicationContext db = new ApplicationContext())
+            {
+                DBtextAll = db.TextControllers.ToList();
+                if (playerId != 0)
+                {
+                    player = db.Player.FirstOrDefault(x => x.Id == playerId);
+                    db.Inventories.Include(pl => pl.Player).ToList();
+                }
+            }
         }
         else
         {
             lineDB.Text = "Сначала необходимо зарегистрироваться или войти";
             startDialod = true;
         }
+    }
 
+    private void ShowStatPlayer()
+    {
+        if (player != null)
+        {
+            showStatPlayer = true;
+            showSPECIALPoints = false;
+        }
+    }
+    private void CloseStatePlayer()
+    {
+        showStatPlayer = false;
+    }
 
+    private void RemoveStrength()
+    {
+        if (S > player.Strength)
+        {
+            S--;
+            AllPoints++;
+        }
+
+    }
+    private void AddStrength()
+    {
+        if (AllPoints != 0)
+        {
+            AllPoints--;
+            S++;
+        }
+    }
+
+    private void RemovePerception()
+    {
+        if (P > player.Perception)
+        {
+            P--;
+            AllPoints++;
+        }
+    }
+    private void AddPerception()
+    {
+        if (AllPoints != 0)
+        {
+            AllPoints--;
+            P++;
+        }
+    }
+
+    private void RemoveEndurance()
+    {
+        if (E > player.Endurance)
+        {
+            E--;
+            AllPoints++;
+        }
+    }
+    private void AddEndurance()
+    {
+        if (AllPoints != 0)
+        {
+            E++;
+            AllPoints--;
+        }
+    }
+
+    private void RemoveCharisma()
+    {
+        if (C > player.Charisma)
+        {
+            C--;
+            AllPoints++;
+        }
+
+    }
+    private void AddCharisma()
+    {
+        if (AllPoints != 0)
+        {
+            C++;
+            AllPoints--;
+        }
+
+    }
+
+    private void RemoveIntelligence()
+    {
+        if (I > player.Intelligence)
+        {
+            I--;
+            AllPoints++;
+        }
+
+    }
+    private void AddIntelligence()
+    {
+        if (AllPoints != 0)
+        {
+            I++;
+            AllPoints--;
+        }
+    }
+
+    private void RemoveAgility()
+    {
+        if (A > player.Agility)
+        {
+            A--;
+            AllPoints++;
+        }
+
+    }
+    private void AddAgility()
+    {
+        if (AllPoints != 0)
+        {
+            A++;
+            AllPoints--;
+        }
+
+    }
+
+    private void RemoveLuck()
+    {
+        if (L > player.Luck)
+        {
+            L--;
+            AllPoints++;
+        }
+
+    }
+    private void AddLuck()
+    {
+        if (AllPoints != 0)
+        {
+            L++;
+            AllPoints--;
+        }
+    }
+
+    private void ToDistribute()
+    {
+        using (ApplicationContext db = new ApplicationContext())
+        {
+            player.SaveCountSPECIAL = AllPoints;
+            player.Strength = S;
+            player.Perception = P;
+            player.Endurance = E;
+            player.Charisma = C;
+            player.Intelligence = I;
+            player.Agility = A;
+            player.Luck = L;
+            db.Player.Update(player);
+            db.SaveChanges();
+        }
     }
 }

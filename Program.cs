@@ -1,5 +1,6 @@
 using Blazored.LocalStorage;
 using FalloutTQBlazor.Data;
+using MatBlazor;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 
@@ -10,7 +11,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddSingleton<WeatherForecastService>();
-
+builder.Services.AddMatBlazor();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

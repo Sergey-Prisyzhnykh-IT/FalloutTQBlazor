@@ -46,17 +46,11 @@
 else
 {
     <h1>Добро пожаловать в пустошь @player.Name</h1>
-    @foreach (var item in player.Inventory.ToList())
+    @foreach (var i in @player.Inventory.NameItem)
     {
-
-        @foreach (var i in @item.NameItem.ToArray())
-        {
-            <h1>@i</h1>
-        }
-
+        <h1>@i</h1>
     }
     <MatButton Link="/Game" Raised="true">@textButtonStartGame</MatButton>
-@*    <input type="button" value="@textButtonStartGame" @onclick="StartGame" />*@
 }
 
 
@@ -116,7 +110,7 @@ else
                 checkLoginAndPassword = true;
                 checkEnter = true;
                 textButtonStartGame = "Начать путешествие";
-                await localStorage.SetItemAsync("PlayerID",playerDB.Id.ToString());
+                await localStorage.SetItemAsync("PlayerID",playerDB.Id);
                 //await localStorage.SetItemAsync("CheckEnter", true);
             }
         }

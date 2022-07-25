@@ -1,6 +1,41 @@
 ﻿.Gamediv {
     position: absolute;
     top: 15%;
-    margin-right:50px;
+    margin-right: 50px;
+}
+.TextBorder {
+    width: auto;
+    height: auto;
+    border: 3px solid #fff;
+    border-radius: 10px;
+}
+.TextBorder div {
+    margin-left:10px;
+    margin-right:10px;
+    margin-bottom:10px;
+    margin-top:10px;
 }
 
+.StatePlayerAndInventories {
+        display: inline-block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .StatePlayerAndInventories div {
+        float: right;
+        margin-right:15%;
+        width: auto;
+        height: auto;
+        border: 3px solid #fff; 
+        border-radius: 10px; 
+    }
+
+        .StatePlayerAndInventories div:nth-of-type(odd) {
+            float: left;
+            clear: right;
+            width: auto;
+            height: auto;
+            border: 3px solid #fff; 
+            border-radius: 10px; 
+        }

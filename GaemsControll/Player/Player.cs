@@ -21,8 +21,10 @@ namespace FalloutTQBlazor.GaemsControll.Player
         public int Сovers { get; set; } // крышки(деньги)
 
         public int SaveIdDialog { get; set; } // сохраняем прогресс прохождения
+        public int SaveCountSPECIAL { get; set; } // сохраняем очки SPECIAL
 
-        public List<Inventory> Inventory { get; set; } = new();
+        public Inventory Inventory { get; set; }
+        //public List<Inventory> Inventory { get; set; } = new();
 
         public Player()
         {
@@ -43,6 +45,7 @@ namespace FalloutTQBlazor.GaemsControll.Player
             Luck = 1;
             Intelligence = 1;
             SaveIdDialog = 1;
+            SaveCountSPECIAL = 0;
             Сovers = 1000;
         }
     }
